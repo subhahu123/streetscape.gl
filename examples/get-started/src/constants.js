@@ -9,7 +9,8 @@ export const XVIZ_CONFIG = {
 };
 
 export const XVIZ_SETTINGS = {
-  PLAYBACK_FRAME_RATE: 10
+  PLAYBACK_FRAME_RATE: 10,
+  TIME_WINDOW: 0.4
 };
 
 // OBJ model width 2073mm, length 4946mm
