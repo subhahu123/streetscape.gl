@@ -60,9 +60,19 @@ function getSocketRequestParams(options) {
 // Calculate based on current XVIZStreamBuffer data
 // Returns null if update is not needed
 export function updateSocketRequestParams(timestamp, metadata, bufferLength, bufferRange) {
-  const {start_time: logStartTime, end_time: logEndTime} = metadata;
+  let {start_time: logStartTime, end_time: logEndTime} = metadata;
+
+  if (!timestamp && !logStartTime) {
+    // Request default start time
+    return {};
+  }
+
   const totalDuration = logEndTime - logStartTime;
   const chunkSize = bufferLength || totalDuration;
+
+  if (!Number.isFinite(chunkSize)) {
+    return null;
+  }
 
   if (chunkSize >= totalDuration) {
     // Unlimited buffer
@@ -182,18 +192,22 @@ export default class XVIZStreamLoader extends XVIZLoaderInterface {
       return;
     }
 
-    this.lastRequest = params;
+    if (params.startTimestamp) {
+      this.lastRequest = params;
+    }
 
     // prune buffer
-    const oldVersion = this.streamBuffer.valueOf();
-    this.streamBuffer.updateFixedBuffer(params.bufferStart, params.bufferEnd);
-    if (this.streamBuffer.valueOf() !== oldVersion) {
-      this.set('streams', this.streamBuffer.getStreams());
+    if (params.bufferStart && params.bufferEnd) {
+      const oldVersion = this.streamBuffer.valueOf();
+      this.streamBuffer.updateFixedBuffer(params.bufferStart, params.bufferEnd);
+      if (this.streamBuffer.valueOf() !== oldVersion) {
+        this.set('streams', this.streamBuffer.getStreams());
+      }
+      this.bufferRange = rangeUtils.intersect(
+        [params.bufferStart, params.bufferEnd],
+        this.bufferRange
+      );
     }
-    this.bufferRange = rangeUtils.intersect(
-      [params.bufferStart, params.bufferEnd],
-      this.bufferRange
-    );
 
     if (this.isOpen()) {
       this.xvizHandler.transformLog(params);
@@ -267,6 +281,17 @@ export default class XVIZStreamLoader extends XVIZLoaderInterface {
     }
   }
 
+  _setLogSynchronizer() {
+    const metadata = this.get('metadata');
+    const timeRange = this.streamBuffer.getLoadedTimeRange();
+    const startTime = metadata.start_time || (timeRange && timeRange.start) || 0;
+
+    if (Number.isFinite(startTime)) {
+      this.set('logSynchronizer', new StreamSynchronizer(startTime, this.streamBuffer));
+      this.seek(startTime);
+    }
+  }
+
   // Notifications and metric reporting
   _onWSOpen = () => {
     // Request data if we are restarting, otherwise wait for metadata
@@ -288,7 +313,7 @@ export default class XVIZStreamLoader extends XVIZLoaderInterface {
           // already has metadata
           return;
         }
-        this.set('logSynchronizer', new StreamSynchronizer(message.start_time, this.streamBuffer));
+
         this._setMetadata(message);
         this.emit('ready', message);
 
@@ -297,12 +322,21 @@ export default class XVIZStreamLoader extends XVIZLoaderInterface {
       case LOG_STREAM_MESSAGE.TIMESLICE:
         const oldVersion = this.streamBuffer.valueOf();
         this.streamBuffer.insert(message);
+
+        if (!this.get('logSynchronizer')) {
+          this._setLogSynchronizer();
+        }
+
         if (this.streamBuffer.valueOf() !== oldVersion) {
           this.set('streams', this.streamBuffer.getStreams());
-          this.bufferRange = rangeUtils.add(
-            [this.lastRequest.startTimestamp, message.timestamp],
-            this.bufferRange
-          );
+
+          const {start, end} = this.streamBuffer.getLoadedTimeRange();
+          let timeRange = [start, end];
+          if (this.lastRequest) {
+            timeRange = [this.lastRequest.startTimestamp, message.timestamp];
+          }
+
+          this.bufferRange = rangeUtils.add(timeRange, this.bufferRange);
         }
         this.emit('update', message);
         break;

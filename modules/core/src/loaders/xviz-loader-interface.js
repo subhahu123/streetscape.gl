@@ -90,10 +90,14 @@ export default class XVIZLoaderInterface {
     if (metadata) {
       const startTime = this.getLogStartTime();
       const endTime = this.getLogEndTime();
-      timestamp = clamp(timestamp, startTime, endTime);
+      if (startTime && endTime) {
+        timestamp = clamp(timestamp, startTime, endTime);
+      }
     }
 
-    this.set('timestamp', timestamp);
+    if (Number.isFinite(timestamp)) {
+      this.set('timestamp', timestamp);
+    }
   }
 
   setLookAhead(lookAhead) {
@@ -128,11 +132,14 @@ export default class XVIZLoaderInterface {
   }
 
   getLogStartTime = createSelector(this, this.getMetadata, metadata => {
-    return metadata && metadata.start_time + getXVIZSettings().TIME_WINDOW;
+    const startTime =
+      metadata && metadata.start_time && metadata.start_time + getXVIZSettings().TIME_WINDOW;
+    return startTime || 0.0;
   });
 
   getLogEndTime = createSelector(this, this.getMetadata, metadata => {
-    return metadata && metadata.end_time;
+    const endTime = metadata && metadata.end_time;
+    return endTime || 30.0;
   });
 
   getCurrentFrame = createSelector(
