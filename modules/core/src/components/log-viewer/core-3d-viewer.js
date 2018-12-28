@@ -329,7 +329,6 @@ export default class Core3DViewer extends PureComponent {
             visible={frame && frame.origin && !viewMode.firstPerson}
           />
         )}
-
         {this.props.children}
       </DeckGL>
     );
