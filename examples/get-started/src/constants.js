@@ -5,11 +5,13 @@ export const MAP_STYLE = 'mapbox://styles/mapbox/light-v9';
 
 export const XVIZ_CONFIG = {
   PRIMARY_POSE_STREAM: '/vehicle_pose',
-  OBJECT_STREAM: '/tracklets/objects'
+  OBJECT_STREAM: '/tracklets/objects',
+  TIMESTAMP_FORMAT: 'seconds'
 };
 
 export const XVIZ_SETTINGS = {
-  PLAYBACK_FRAME_RATE: 10
+  PLAYBACK_FRAME_RATE: 10,
+  TIME_WINDOW: 0.4
 };
 
 // OBJ model width 2073mm, length 4946mm
