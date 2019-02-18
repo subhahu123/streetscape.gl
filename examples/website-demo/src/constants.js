@@ -47,6 +47,14 @@ export const SETTINGS = {
 /* eslint-disable no-undef */
 export const LOGS = [
   {
+    name: 'ATG',
+    path: `${LOG_DIR}/atg`,
+    xvizConfig: {
+      TIME_WINDOW: 0.4
+    },
+    videoAspectRatio: 10 / 3
+  },
+  {
     name: 'KITTI-0005',
     path: `${LOG_DIR}/kitti/2011_09_26_drive_0005_sync`,
     xvizConfig: {
