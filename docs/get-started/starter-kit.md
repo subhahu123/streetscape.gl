@@ -27,7 +27,7 @@ This example loads an XVIZ log extracted from the [KITTI](http://www.cvlibs.net/
 dataset. By default, the data is loaded from a remote URL using the
 [XVIZFileLoader](/docs/api-reference/xviz-file-loader.md). You can change the URL to point to your
 own files by tweaking the options in
-[log-from-file.js](https://github.com/uber/streetscape.gl/tree/master/examples/get-started/log-from-file.js).
+[log-from-factory.js](https://github.com/uber/streetscape.gl/tree/master/examples/get-started/log-from-factory.js).
 
 You can also use this application to stream XVIZ data from a server. To do this:
 
@@ -36,8 +36,8 @@ You can also use this application to stream XVIZ data from a server. To do this:
   to start a local XVIZ stream server
 - In the get-started example directory, run `yarn start-streaming`.
 
-You can change the streaming options in
-[log-from-stream.js](https://github.com/uber/streetscape.gl/tree/master/examples/get-started/src/log-from-stream.js).
+You can change the streaming options in the function **buildLoaderOptions()** in the file
+[app.js](https://github.com/uber/streetscape.gl/tree/master/examples/get-started/src/log-from-factory.js).
 
 ## Application Controls
 

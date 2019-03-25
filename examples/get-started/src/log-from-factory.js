@@ -18,14 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {XVIZFileLoader} from 'streetscape.gl';
+import {XVIZFileLoader, XVIZLiveLoader, XVIZStreamLoader} from 'streetscape.gl';
 
-export default new XVIZFileLoader({
-  timingsFilePath:
-    'https://raw.githubusercontent.com/uber/xviz-data/master/kitti/2011_09_26_drive_0005_sync/0-frame.json',
-  getFilePath: index =>
-    `https://raw.githubusercontent.com/uber/xviz-data/master/kitti/2011_09_26_drive_0005_sync/${index +
-      1}-frame.glb`,
-  worker: true,
-  maxConcurrency: 4
-});
+class XVIZLoaderFactory {
+  load(stream, live, options) {
+    if (stream) {
+      return this.loadStream(options);
+    } else if (live) {
+      return this.loadLive(options);
+    }
+
+    return this.loadFile();
+  }
+
+  loadFile() {
+    return new XVIZFileLoader({
+      timingsFilePath:
+        'https://raw.githubusercontent.com/uber/xviz-data/master/kitti/2011_09_26_drive_0005_sync/0-frame.json',
+      getFilePath: index =>
+        `https://raw.githubusercontent.com/uber/xviz-data/master/kitti/2011_09_26_drive_0005_sync/${index +
+          1}-frame.glb`,
+      worker: true,
+      maxConcurrency: 4
+    });
+  }
+
+  loadStream(options) {
+    return new XVIZStreamLoader(options);
+  }
+
+  loadLive(options) {
+    return new XVIZLiveLoader(options);
+  }
+}
+
+export default new XVIZLoaderFactory();

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/* global document, console */
+/* global document, console, window */
 /* eslint-disable no-console, no-unused-vars, no-undef */
 import React, {PureComponent} from 'react';
 import {render} from 'react-dom';
@@ -37,15 +37,44 @@ import {
 import {Form} from '@streetscape.gl/monochrome';
 
 import {XVIZ_CONFIG, APP_SETTINGS, MAPBOX_TOKEN, MAP_STYLE, XVIZ_STYLE, CAR} from './constants';
+import {default as XVIZLoaderFactory} from './log-from-factory';
 
 setXVIZConfig(XVIZ_CONFIG);
 
+// Pass through path & parameters to loaders
+function buildLoaderOptions() {
+  const url = new URL(window.location);
+  const params = url.searchParams;
+
+  const options = {
+    logGuid: params.get('log') || 'mock',
+    serverConfig: {
+      defaultLogLength: 30,
+      serverUrl: `ws://localhost:8081${url.pathname}`
+    },
+    worker: Boolean(params.get('worker')) || true,
+    maxConcurrency: 4
+  };
+
+  const addParam = (param, prop, dflt) => {
+    if (params.has(param) || dflt) {
+      options[prop] = params.get(param) || dflt;
+    }
+  };
+
+  addParam('profile', 'logProfile');
+  addParam('timestamp', 'timestamp');
+  addParam('duration', 'duration');
+
+  if (__IS_LIVE__) {
+    addParam('bufferLength', 'bufferLength', 10);
+  }
+
+  return options;
+}
+
 // __IS_STREAMING__ and __IS_LIVE__ are defined in webpack.config.js
-const exampleLog = require(__IS_STREAMING__
-  ? './log-from-stream'
-  : __IS_LIVE__
-    ? './log-from-live'
-    : './log-from-file').default;
+const exampleLog = XVIZLoaderFactory.load(__IS_STREAMING__, __IS_LIVE__, buildLoaderOptions());
 
 class Example extends PureComponent {
   state = {
